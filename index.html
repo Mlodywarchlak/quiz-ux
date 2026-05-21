@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz UX – Przygotowanie do Egzaminu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a1a;color:#e0e0ff;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a0533,#0d1b4b);padding:40px 20px;text-align:center;border-bottom:1px solid #2a2a5a}
+.header h1{font-size:2.2rem;font-weight:800;background:linear-gradient(90deg,#a78bfa,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.header p{color:#8888bb;font-size:1rem}
+.stats{display:flex;gap:20px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.stat{background:rgba(255,255,255,0.05);border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:12px 24px;text-align:center}
+.stat-val{font-size:1.8rem;font-weight:700;color:#a78bfa}
+.stat-label{font-size:0.75rem;color:#8888bb;text-transform:uppercase;letter-spacing:1px}
+.container{max-width:820px;margin:0 auto;padding:30px 20px}
+.progress-bar{background:rgba(255,255,255,0.1);border-radius:99px;height:6px;margin-bottom:30px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#a78bfa,#60a5fa);border-radius:99px;transition:width 0.4s ease}
+.question-card{background:linear-gradient(135deg,rgba(26,5,51,0.8),rgba(13,27,75,0.8));border:1px solid rgba(167,139,250,0.2);border-radius:20px;padding:32px;margin-bottom:24px;display:none;animation:fadeIn 0.4s ease}
+.question-card.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.question-num{font-size:0.8rem;color:#a78bfa;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.question-text{font-size:1.15rem;font-weight:600;line-height:1.6;margin-bottom:24px;color:#e8e8ff}
+.options{display:flex;flex-direction:column;gap:12px}
+.option{display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(167,139,250,0.15);border-radius:12px;cursor:pointer;transition:all 0.2s;font-size:0.95rem}
+.option:hover{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.4);transform:translateX(4px)}
+.option.correct{background:rgba(52,211,153,0.15);border-color:#34d399;color:#34d399}
+.option.wrong{background:rgba(239,68,68,0.15);border-color:#ef4444;color:#ef4444}
+.option.disabled{cursor:default;transform:none}
+.option-letter{width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;color:#a78bfa}
+.option.correct .option-letter{background:rgba(52,211,153,0.3);color:#34d399}
+.option.wrong .option-letter{background:rgba(239,68,68,0.3);color:#ef4444}
+.feedback{margin-top:16px;padding:14px 18px;border-radius:12px;font-size:0.9rem;display:none;font-weight:500}
+.feedback.correct{background:rgba(52,211,153,0.15);border:1px solid #34d399;color:#34d399}
+.feedback.wrong{background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#ef4444}
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px}
+.btn{padding:12px 28px;border:none;border-radius:12px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-next{background:linear-gradient(135deg,#a78bfa,#60a5fa);color:#fff;margin-left:auto}
+.btn-next:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-next:disabled{opacity:0.4;cursor:default;transform:none}
+.btn-restart{background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);color:#a78bfa}
+.btn-restart:hover{background:rgba(167,139,250,0.25)}
+.result-screen{display:none;text-align:center;padding:60px 20px;animation:fadeIn 0.5s ease}
+.result-screen.active{display:block}
+.result-emoji{font-size:5rem;margin-bottom:20px}
+.result-score{font-size:4rem;font-weight:800;background:linear-gradient(90deg,#a78bfa,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.result-label{font-size:1.2rem;color:#8888bb;margin-top:8px}
+.result-msg{margin-top:24px;font-size:1.1rem;color:#c0c0e0;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.6}
+.mode-toggle{display:flex;gap:10px;justify-content:center;margin-bottom:24px}
+.mode-btn{padding:8px 20px;border-radius:99px;border:1.5px solid rgba(167,139,250,0.3);background:transparent;color:#a78bfa;font-family:inherit;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
+.mode-btn.active{background:rgba(167,139,250,0.2);border-color:#a78bfa}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🎓 Quiz UX</h1>
+<p>Przygotowanie do egzaminu — UX, UEQ, PrEmo, Psychologia Emocji & Poznawcza</p>
+<div class="stats">
+<div class="stat"><div class="stat-val" id="s-total">60</div><div class="stat-label">Pytań</div></div>
+<div class="stat"><div class="stat-val" id="s-correct" style="color:#34d399">0</div><div class="stat-label">Poprawnych</div></div>
+<div class="stat"><div class="stat-val" id="s-wrong" style="color:#ef4444">0</div><div class="stat-label">Błędnych</div></div>
+<div class="stat"><div class="stat-val" id="s-pct" style="color:#60a5fa">0%</div><div class="stat-label">Wynik</div></div>
+</div>
+</div>
+<div class="container">
+<div class="mode-toggle">
+<button class="mode-btn active" id="mode-all" onclick="setMode('all')">Wszystkie (60)</button>
+<button class="mode-btn" id="mode-rand" onclick="setMode('random')">Losowe 20</button>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+<div id="quiz-area"></div>
+<div class="result-screen" id="result">
+<div class="result-emoji" id="r-emoji">🏆</div>
+<div class="result-score" id="r-score">0/60</div>
+<div class="result-label" id="r-label"></div>
+<div class="result-msg" id="r-msg"></div>
+<br><br>
+<button class="btn btn-restart" onclick="restart()">🔄 Zacznij od nowa</button>
+</div>
+</div>
+<script>
+const ALL_QUESTIONS = [{"q": "Czym jest User Experience (UX)?", "a": ["Zbiorem działań marketingowych", "Całością wrażeń podczas korzystania z produktu", "Wyłącznie interfejsem graficznym", "Systemem bazy danych"], "correct": 1}, {"q": "Jak Omnichannel różni się od Multichannel?", "a": ["Multichannel zapewnia spójność, Omnichannel nie", "Omnichannel dotyczy tylko kanałów stacjonarnych", "Omnichannel zapewnia spójność na każdym kanale, Multichannel nie", "Multichannel dotyczy doświadczenia, Omnichannel akcji"], "correct": 2}, {"q": "Z jakich kroków składa się Design Thinking?", "a": ["Empatyzacja, Definicja, Ideacja, Prototypowanie, Testowanie", "Analiza, Szkic, Wdrożenie, Testy, Produkcja", "Planowanie, Design, Kodowanie, Testowanie, Wydanie", "Badania ilościowe, Development, Sprzedaż, Budżet"], "correct": 0}, {"q": "Jak zrealizować 1. heurystykę Nielsena (status systemu)?", "a": ["Zmieniając kolory linków po kliknięciu", "Wyświetlając ukryte zaklęcia w formularzu", "Pokazując pasek postępu (Krok 1 z 3) podczas zamawiania", "Uniemożliwiając zakupy bez rejestracji"], "correct": 2}, {"q": "Kontynuowanie zakupów jako gość (bez konta) spełnia heurystykę nr:", "a": ["#1 Pokazuj status systemu", "#2 Zgodność systemu z rzeczywistością", "#3 Daj użytkownikowi pełną kontrolę", "#8 Estetyka i umiar"], "correct": 2}, {"q": "Zgodnie z 4. heurystyką Nielsena (spójność), jak podejść do palety kolorów?", "a": ["Używać kilku dominujących barw, nie miliona odcieni", "Nie używać żadnych barw", "Używać wszystkich odcieni w jednej sekcji", "Zmieniać paletę na każdej podstronie"], "correct": 0}, {"q": "Jaki mechanizm pomaga spełnić 5. heurystykę (zapobieganie błędom)?", "a": ["Gruby dokument z instrukcją", "Pokazanie stanu magazynowego", "Jeden format daty bez podpowiedzi", "Rygorystyczne reguły haseł"], "correct": 1}, {"q": "Jak powinien wyglądać komunikat błędu (9. heurystyka)?", "a": ["Kod błędu dla developera", "Puste okno z migającą ikoną", "Dlaczego błąd + co użytkownik może zrobić", "Automatyczne zamknięcie aplikacji"], "correct": 2}, {"q": "Dlaczego UX zwiększa przychód z ruchu organicznego?", "a": ["Ułatwia znalezienie informacji i zmniejsza zapytania do CS", "Obniża koszty onboardingu pracowników", "Klienci ufają opiniom w internecie, co nakręca rekomendacje", "Podwyższa opłaty za usługi reklamowe"], "correct": 2}, {"q": "Jak UX zmniejsza koszty firmy?", "a": ["Obniża wskaźniki ponownych zakupów", "Ułatwia procesy i pozwala szybciej wykonywać zadania", "Generuje więcej złożonych interakcji", "Zmusza klientów do zewnętrznych szkoleń"], "correct": 1}, {"q": "Na czym polega ocena produktu w UEQ?", "a": ["10 otwartych pytań pisemnych", "Dopasowaniu emotikon do odczuć", "Parach przeciwstawnych cech na 7-stopniowej skali", "Przyporządkowaniu oceny 0-100"], "correct": 2}, {"q": "Jakie są zalecenia dla osoby wypełniającej UEQ?", "a": ["Przemyśleć i skonsultować z innymi", "Zaznaczać tylko skrajne wartości", "Pomijać niezwiązane pozycje", "Odpowiadać spontanicznie, nie zastanawiając się długo"], "correct": 3}, {"q": "Ile punktów ma skala wyboru w polskiej wersji UEQ?", "a": ["3", "5", "7", "10"], "correct": 2}, {"q": "Która para pojęć występuje w kwestionariuszu UEQ?", "a": ["Szybki – wolny", "Nieprzyjazny – agresywny", "Cichy – głośny", "Wysoki – niski"], "correct": 0}, {"q": "Jakie wymiary bada UEQ?", "a": ["Czas nauki języka, czas relaksacji", "Atrakcyjność, efektywność, niezawodność, stymulację, nowatorskość", "Tętno i przewodnictwo skóry", "Tylko poziom złości i smutku"], "correct": 1}, {"q": "Na czym opiera się narzędzie PrEmo Tool?", "a": ["Czujnikach GSR na dłoniach", "Animowanych postaciach reprezentujących emocje", "Algorytmie śledzącym ruch kursora", "Wychwytywaniu słów kluczowych z wywiadu"], "correct": 1}, {"q": "Kiedy PrEmo Tool ma przewagę nad innymi metodami?", "a": ["Przy bardzo intensywnych emocjach", "Wśród dzieci, osób starszych, przy niskim natężeniu emocji", "Wymaga zaawansowanej wiedzy analitycznej", "Mierzy wskaźniki neurofizjologiczne"], "correct": 1}, {"q": "Jaka jest unikalna cecha PrEmo Tool?", "a": ["Wymusza określenie jednej dominującej emocji", "Ignoruje pozytywne odczucia", "Jednoczesna walidacja pozytywnych i negatywnych emocji", "Oblicza procentowy wskaźnik konwersji"], "correct": 2}, {"q": "Co należy pamiętać przy stosowaniu emoji w badaniach?", "a": ["Każda emotikona może mieć inne znaczenie dla różnych użytkowników", "Emoji są identycznie rozumiane na całym świecie", "Należy używać wyłącznie neutralnych emoji", "Emoji uniemożliwia badanie emocji negatywnych"], "correct": 0}, {"q": "Na jakiej skali formułowane są oceny w SUS?", "a": ["Skala A-F", "Od Zdecydowanie się nie zgadzam do Zdecydowanie się zgadzam", "Obiektywna skala w ułamkach sekund", "0-10 gdzie 10 to najgorszy wynik"], "correct": 1}, {"q": "Czego należy unikać interpretując wyniki SUS?", "a": ["Mnożenia wyników przez liczbę pytań", "Traktowania wyniku 0-100 jak procentów bez normalizacji", "Odpytywania małych prób", "Używania go jako standardu branży"], "correct": 1}, {"q": "Ile przymiotników zawierają Microsoft Product Reaction Cards?", "a": ["10", "118", "7 postaci w 3 stanach", "18 pozytywnych wyrażeń"], "correct": 1}, {"q": "Co mierzy metoda SAM (Self-Assessment Manikin)?", "a": ["Pobudzenie, przyjemność i kontrolę", "Ruch gałek ocznych", "Słowa użytkownika przez AI", "Rozszerzenie źrenicy po kliknięciu"], "correct": 0}, {"q": "Czym wyróżnia się Experience Sampling (dzienniczki)?", "a": ["Rejestruje odczucia na gorąco tu i teraz", "Zaprasza do laboratorium z czujnikami EEG", "Zbiera próbki uśmiechów ukrytą kamerą", "Narzuca gotowe przymiotniki bez komentarza"], "correct": 0}, {"q": "Zgodnie z Peak-End Rule zapamiętujemy doświadczenia na podstawie:", "a": ["Wyłącznie pierwszego wrażenia", "Szczytowych momentów i punktu końcowego", "Średniej matematycznej zadowolenia", "Czasu trwania całego zadania"], "correct": 1}, {"q": "Co powoduje różnica między modelem mentalnym a produktem?", "a": ["Uczucie dumy i przynależności", "Frustrację i zdenerwowanie", "Antycypację pozytywnych doświadczeń", "Niezawodność systemu operacyjnego"], "correct": 1}, {"q": "Dlaczego młodzi użytkownicy odczuwali wstyd przy wózkach inwalidzkich z rączkami?", "a": ["Z łatwości poruszania się", "Ochrony i wygody", "Uchwyty przypominały zależność i brak autonomii", "Nadmiernej stymulacji sensorycznej"], "correct": 2}, {"q": "Czym zajmują się obiektywne metody w badaniach emocji UX?", "a": ["Obserwacją reakcji neurofizjologicznych/behawioralnych", "Raportowaniem odczuć do dzienniczka", "Obliczaniem kosztów inwestycji", "Empatycznym wczuciem badacza"], "correct": 0}, {"q": "Czego NIE wiemy z samego eyetrackingu?", "a": ["Na co patrzy uczestnik", "Jak zmienia się rozszerzenie źrenicy", "Kolejności postrzegania elementów", "Dlaczego użytkownik zwrócił uwagę na obiekt"], "correct": 3}, {"q": "Na czym polega badanie GSR/EDA?", "a": ["Śledzeniu mikroekspresji twarzy kamerą", "Pomiarze oporu elektrycznego skóry związanego z nawilżeniem", "Mierzeniu przepływu krwi w płatach czołowych", "Mierzeniu aktywności mięśni"], "correct": 1}, {"q": "Dlaczego przy GSR niezbędna jest znajomość kontekstu?", "a": ["Wzrost może oznaczać ekscytację lub lęk", "GSR mierzy tylko głęboki smutek", "GSR nie mierzy emocji, lecz ruchy mięśni", "Narzędzie działa tylko przy określonej temperaturze"], "correct": 0}, {"q": "Co rejestruje metoda EEG?", "a": ["Opóźnione kliknięcia i zawieszenia", "Rytm serca po wysiłku", "Aktywność elektryczną fal mózgowych", "Zmiany rozmiaru źrenicy"], "correct": 2}, {"q": "Na czym polega Emotion AI (np. Affectiva)?", "a": ["Zastępowaniu respondentów botami", "Analizie mimiki twarzy z bazy danych", "Zmianie kolorystyki przy złości klienta", "Wychwytywaniu napięcia mięśni szyi"], "correct": 1}, {"q": "Co sygnalizuje opóźnienie kliknięć, gwałtowne ruchy myszką i drop-off?", "a": ["Całkowitą nudę użytkownika", "Pozytywne zaangażowanie (stan Flow)", "Frustrację, zagubienie lub przeciążenie poznawcze", "Wysoką stymulację i nowatorskość"], "correct": 2}, {"q": "Teoria Paula Ekmana mówi, że emocje są:", "a": ["Ściśle określone językowo i kulturowo", "Oparte wyłącznie na wspomnieniach", "Konstruktami zależnymi od edukacji", "Wrodzonymi biologicznymi programami z uniwersalną mimiką"], "correct": 3}, {"q": "Jakie są emocje podstawowe według Ekmana?", "a": ["Spokój, melancholia, fascynacja, obojętność", "Frustracja, wina, duma, wstyd", "Strach, złość, smutek, radość, wstręt, zaskoczenie", "Napięcie, satysfakcja, euforia, zdziwienie"], "correct": 2}, {"q": "Według teorii konstruowania emocji Lisy Feldman Barrett:", "a": ["Mózg aktywnie konstruuje emocje z interocepcji i kontekstu", "Mózg jest odbiornikiem stałych wyzwalaczy biologicznych", "Ciało nie odgrywa roli, decyduje tylko wzrok", "Smutek przejawia się identycznie na wszystkich kontynentach"], "correct": 0}, {"q": "Czym jest interocepcja w teorii Lisy Feldman Barrett?", "a": ["Predykcją", "Refleksją", "Świadomością doznań z własnego ciała", "Interakcją sprzężenia zwrotnego"], "correct": 2}, {"q": "Co pokazał eksperyment z portretem kobiety i Sereną Williams?", "a": ["Izolowana mimika bez kontekstu dawała rozbieżne odczyty", "Wszyscy badani odczytali twarze ze 100% zgodnością", "Głos tenisistki ujawnił depresję", "Strach i euforia zawsze przejawiają się przez te same mięśnie"], "correct": 0}, {"q": "Ile poziomów ma model Dona Normana?", "a": ["2 (Pozytywny i Negatywny)", "3 (Pierwotny, Behawioralny, Refleksyjny)", "5 (jak Piramida Masłowa)", "4 (Sensoryka, Interocepcja, Predykcja, Konceptualizacja)"], "correct": 1}, {"q": "Poziom pierwotny (visceral) u Normana odpowiada za:", "a": ["Wnioskowanie logiczne i poczucie przynależności", "Podświadome reagowanie na wygląd i estetykę (pierwsze wrażenie)", "Wygodę i feedback przy wciśnięciu przycisku", "Zaufanie po wieloletnim używaniu marki"], "correct": 1}, {"q": "Projektowanie dla jakiego poziomu Normana kluczowe jest sprzężenie zwrotne?", "a": ["Refleksyjnego", "Sensorycznego", "Empatycznego", "Behawioralnego"], "correct": 3}, {"q": "Na czym opiera się poziom refleksyjny u Normana?", "a": ["Na zapachach i cechach fizycznych sprzętu", "Na uwarunkowaniach kulturowych, samoświadomości, wspomnieniach i tożsamości z marką", "Na automatycznej reakcji rozszerzenia źrenic", "Wyłącznie na ergonomii"], "correct": 1}, {"q": "Co mówi Piramida Waltera (Emotional Design)?", "a": ["Do zachwycenia emocją nie potrzeba funkcjonalności", "Niespodzianka jest najważniejsza, błędy się zniwelują", "Projekt nagradzający emocją sprawia, że użytkownicy przebaczają mniejsze wady", "Najniższy stopień to potrzeba uznania"], "correct": 2}, {"q": "Jak nazywa się bias związany z okrągłym, przyjaznym designem (np. Garbusem)?", "a": ["Peak-End Bias", "Confirmation Bias", "Baby-face bias", "Halo effect"], "correct": 2}, {"q": "Dlaczego mechanizm niespodzianki (np. 404 z potworkiem) wywołuje pozytywne emocje?", "a": ["Zwiększa nieświadomy ból użytkownika", "Zaburza schemat i pozytywnie przerywa rutynę", "Tuszuje techniczne błędy podczas płatności", "Skraca czas ładowania bazy danych"], "correct": 1}, {"q": "Antycypacja w interfejsie to:", "a": ["Opóźnianie odpowiedzi mailowej dla efektu", "Emotikona przy logowaniu zmuszająca do rejestracji", "Ostrzeżenie i podpowiedź w formularzu uprzedzająca problem użytkownika", "Czerwone komunikaty z opcją zamykania"], "correct": 2}, {"q": "Psychologia poznawcza zajmuje się:", "a": ["Zjawiskami paranormalnymi", "Jak odbieramy bodźce, uczymy się, pamiętamy i przetwarzamy informacje", "Analizą interakcji w zespołach przez zarobki", "Obserwacją psów Pawłowa"], "correct": 1}, {"q": "Procesy poznawcze to procesy, dzięki którym:", "a": ["Bodźce są transformowane, redukowane, wzmacniane lub przywoływane do działania", "Działają wyłącznie odruchy bezwarunkowe", "Nie istnieją podczas korzystania ze stron internetowych", "Są tworzone przez systemy informatyczne"], "correct": 0}, {"q": "Jaki jest wpływ multitaskingu według psychologii poznawczej?", "a": ["Podnosi potencjał umysłowy o kilkaset procent", "Działamy wolniej i z błędami niż przy sekwencyjnym wykonywaniu", "Jest niemożliwy ze względu na brak koordynacji", "Nie wpływa na szybkość pracy"], "correct": 1}, {"q": "Czym jest Teoria Gestaltu?", "a": ["Prawa mechaniki ruchu kursora", "Prawa opisujące skłonność percepcji do grupowania elementów wizualnych", "Teoria wyjaśniająca powstawanie emocji z interocepcji", "Algorytm rozpoznawania mowy"], "correct": 1}, {"q": "Które prawo Gestalt sprawia, że oko domykaje brakujące obrysy figur?", "a": ["Prawo wspólnego losu", "Prawo przyzwyczajenia", "Prawo domykania (zamknięcia)", "Prawo symetrii"], "correct": 2}, {"q": "W modelu Atkinsona i Shiffrina, gdy uwaga skupia się na bodźcu sensorycznym:", "a": ["Informacja ulega permanentnemu zapisowi w nawykach ruchowych", "Informacja jest bezpowrotnie tracona", "Informacja przechodzi do pamięci krótkotrwałej", "Uruchamiana jest teoria konstruowania emocji"], "correct": 2}, {"q": "Pamięć sensoryczna to:", "a": ["Pamięć wzroku, słuchu i dotyku na etapie odbioru stymulacji", "Pamięć długotrwała oparta o procedury", "Pamięć krótkotrwała robocza", "Pamięć epizodyczna"], "correct": 0}, {"q": "Wiedza o faktach i nazwach (Kto? Co?) to pamięć:", "a": ["Sensoryczna rejestrująca dotyk", "Świadoma pamięć opisowa (długotrwała)", "Proceduralna - odruchów ruchowych", "Predykcyjna autonomiczna"], "correct": 1}, {"q": "Gdy użytkownik odruchowo korzysta z klawiatury bez myślenia, używa pamięci:", "a": ["Nieopisowej (nawyki i procedury)", "Epizodycznej opisującej życie", "Semantycznej geograficznej", "Sensorycznej kasowanej po puszczeniu klawisza"], "correct": 0}, {"q": "Wiedza o psychologii poznawczej w UX pozwala:", "a": ["Diagnozować zaburzenia kardiologiczne", "Konstruować scenariusz badawczy nie przeciążając użytkownika", "Zniechęcać do badań jakościowych", "Stosować przymus z prawami fizyki Gestalt"], "correct": 1}, {"q": "Pamięć semantyczna to:", "a": ["Wspomnienia własnych losów życiowych", "Pojęcia ogólne, fakty, nazewnictwo", "Nieuświadomiony odruch w stronę ciepła", "Szybkie utrwalenie wrażenia graficznego po spojrzeniu"], "correct": 1}, {"q": "Mascot Mailchimp jedzący kable i napis We'll be back shortly to przykład:", "a": ["Standardowego komunikatu błędu technicznego", "Komunikatu w kolorach białym i czarnym", "Pozytywnego designu emocjonalnego na stronie z awarią", "Braku jakiejkolwiek planszy na stronie"], "correct": 2}, {"q": "Ludzki mózg w kontekście psychologii poznawczej to:", "a": ["Superszybki nieskończony procesor", "Zmęczony rejestr mięśni gładkich", "Skąpiec poznawczy oszczędzający zasoby uwagi na znane schematy", "Podświadomość oparta wyłącznie na strachu"], "correct": 2}];
+let questions = [];
+let current = 0;
+let correct = 0;
+let wrong = 0;
+let answered = 0;
+let mode = 'all';
+
+function setMode(m){
+  mode = m;
+  document.getElementById('mode-all').classList.toggle('active', m==='all');
+  document.getElementById('mode-rand').classList.toggle('active', m==='random');
+  restart();
+}
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5)}
+
+function restart(){
+  current=0;correct=0;wrong=0;answered=0;
+  questions = mode==='all' ? [...ALL_QUESTIONS] : shuffle(ALL_QUESTIONS).slice(0,20);
+  document.getElementById('s-total').textContent = questions.length;
+  updateStats();
+  document.getElementById('result').classList.remove('active');
+  render();
+}
+
+function updateStats(){
+  document.getElementById('s-correct').textContent = correct;
+  document.getElementById('s-wrong').textContent = wrong;
+  const pct = answered>0 ? Math.round(correct/answered*100) : 0;
+  document.getElementById('s-pct').textContent = pct+'%';
+  const prog = current/questions.length*100;
+  document.getElementById('progress').style.width = prog+'%';
+}
+
+function render(){
+  const area = document.getElementById('quiz-area');
+  if(current >= questions.length){showResult();return;}
+  const q = questions[current];
+  const letters = ['A','B','C','D'];
+  const opts = q.a.map((text,i)=>`
+    <div class="option" id="opt-${i}" onclick="answer(${i})">
+      <div class="option-letter">${letters[i]}</div>
+      <div>${text}</div>
+    </div>`).join('');
+  area.innerHTML = `
+    <div class="question-card active">
+      <div class="question-num">Pytanie ${current+1} / ${questions.length}</div>
+      <div class="question-text">${q.q}</div>
+      <div class="options">${opts}</div>
+      <div class="feedback" id="feedback"></div>
+      <div class="nav-btns">
+        <button class="btn btn-restart" onclick="restart()">↺ Reset</button>
+        <button class="btn btn-next" id="btn-next" disabled onclick="next()">Następne →</button>
+      </div>
+    </div>`;
+  updateStats();
+}
+
+function answer(idx){
+  const q = questions[current];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o=>o.classList.add('disabled'));
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  answered++;
+  if(idx === q.correct){
+    correct++;
+    opts[idx].classList.add('correct');
+    fb.className='feedback correct';
+    fb.textContent='✅ Poprawnie!';
+  } else {
+    wrong++;
+    opts[idx].classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    fb.className='feedback wrong';
+    fb.textContent='❌ Błąd. Poprawna odpowiedź: '+['A','B','C','D'][q.correct]+') '+q.a[q.correct];
+  }
+  document.getElementById('btn-next').disabled = false;
+  updateStats();
+}
+
+function next(){current++;render();}
+
+function showResult(){
+  document.getElementById('quiz-area').innerHTML='';
+  document.getElementById('result').classList.add('active');
+  const pct = Math.round(correct/questions.length*100);
+  document.getElementById('r-score').textContent = correct+'/'+questions.length;
+  let emoji,label,msg;
+  if(pct>=90){emoji='🏆';label='Wybitny wynik!';msg='Jesteś gotowy na egzamin! Doskonała znajomość materiału z UX, psychologii emocji i narzędzi badawczych.';}
+  else if(pct>=75){emoji='🎯';label='Bardzo dobry wynik!';msg='Świetnie! Masz solidną wiedzę. Przejrzyj pytania, na które odpowiedziałeś błędnie.';}
+  else if(pct>=60){emoji='📚';label='Dobry wynik';msg='Dobry start! Warto powtórzyć tematy z UEQ, PrEmo i teorii emocji Lisy Feldman Barrett.';}
+  else{emoji='💪';label='Trzeba powtórzyć';msg='Nie martw się! Powtórz materiał z podstaw UX, heurystyk Nielsena i psychologii poznawczej i spróbuj ponownie.';}
+  document.getElementById('r-emoji').textContent=emoji;
+  document.getElementById('r-label').textContent=label+' ('+pct+'%)';
+  document.getElementById('r-msg').textContent=msg;
+  document.getElementById('progress').style.width='100%';
+}
+
+restart();
+</script>
+</body>
+</html>
